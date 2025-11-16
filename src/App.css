@@ -14,7 +14,7 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: #3267cf;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -22,10 +22,31 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .App-link {
   color: #61dafb;
+}
+
+/* Kart-container */
+.map-container {
+  width: 100%;
+  height: 50vh;
+  min-height: 300px;
+  transition: background-color 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .map-container {
+    height: 70vh;
+  }
+}
+
+@media (min-width: 1200px) {
+  .map-container {
+    height: 80vh;
+  }
 }
 
 @keyframes App-logo-spin {
@@ -35,4 +56,34 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* DARK MODE */
+body.dark-mode,
+body.dark-mode .App {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+body.dark-mode .App-header {
+  background-color: #1f1f1f;
+  color: #e0e0e0;
+}
+
+body.dark-mode .App-link {
+  color: #bb86fc;
+}
+
+body.dark-mode .map-container {
+  background-color: #1f1f1f;
+}
+
+/* Ekstra: alle overskrifter og avsnitt */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode p,
+body.dark-mode li,
+body.dark-mode span {
+  color: #e0e0e0;
 }

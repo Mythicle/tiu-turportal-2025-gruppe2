@@ -1,11 +1,35 @@
-import OpenMap from "../components/Maps";
+import { useState } from "react";
+import Maps from "../components/Maps";
+import FilterPanelMaps from "../components/FilterPanelMaps";
 
 export default function Kart() {
+  const [showHuts, setShowHuts] = useState(true);
+  const [showTrails, setShowTrails] = useState(true);
+  const [activeTrail, setActiveTrail] = useState(null);
+
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Test</h1>
-      <p>Her er et kart fra Statens Kartverk:</p>
-      <OpenMap />
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "300px 1fr",
+        gap: "20px",
+        padding: "20px",
+      }}
+    >
+      <FilterPanelMaps
+        showHuts={showHuts}
+        showTrails={showTrails}
+        activeTrail={activeTrail}
+        setShowHuts={setShowHuts}
+        setShowTrails={setShowTrails}
+        setActiveTrail={setActiveTrail}
+      />
+
+      <Maps
+        showHuts={showHuts}
+        showTrails={showTrails}
+        activeTrail={activeTrail}
+      />
     </div>
   );
 }
