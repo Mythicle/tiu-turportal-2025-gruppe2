@@ -58,11 +58,8 @@ function App() {
           {/* Beskyttet advertiser-side */}
           <Route
             path="/advertiser"
-            element={isLoggedIn && role === "advertiser" ? (
-              <Advertiser />
-            ) : (
-              <Navigate to="/" />
-            )}
+            element={isLoggedIn && role === "advertiser" ? 
+            (<Advertiser />) : (<Navigate to="/" />)}
           />
 
           {/* Login */}
