@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import "ol/ol.css";
-import Map from "ol/Map";
-import View from "ol/View";
-import TileLayer from "ol/layer/Tile";
-import OSM from "ol/source/OSM";
-import { fromLonLat } from "ol/proj";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import Feature from "ol/Feature";
-import Point from "ol/geom/Point";
-import LineString from "ol/geom/LineString";
-import { Style, Icon, Stroke, Fill, Circle } from "ol/style";
-import Overlay from "ol/Overlay";
-import Geolocation from "ol/Geolocation";
+import Map from "ol/Map.js";
+import View from "ol/View.js";
+import TileLayer from "ol/layer/Tile.js";
+import OSM from "ol/source/OSM.js";
+import { fromLonLat } from "ol/proj.js";
+import VectorLayer from "ol/layer/Vector.js";
+import VectorSource from "ol/source/Vector.js";
+import Feature from "ol/Feature.js";
+import Point from "ol/geom/Point.js";
+import LineString from "ol/geom/LineString.js";
+import { Style, Icon, Stroke, Fill, Circle } from "ol/style.js";
+import Overlay from "ol/Overlay.js";
+import Geolocation from "ol/Geolocation.js";
+import WeatherPanel from "../components/WeatherPanel.js";
+import { toLonLat } from "ol/proj.js";
 
 export default function Maps({ showHuts, showTrails, activeTrail }) {
   const mapRef = useRef();
@@ -22,6 +24,8 @@ export default function Maps({ showHuts, showTrails, activeTrail }) {
   const [followMe, setFollowMe] = useState(false);
   const geolocationRef = useRef();
   const userFeatureRef = useRef();
+
+  const [centerLatLon, setCenterLatLon] = useState({ lat: 60.17989, lon: 9.61519 });
 
   useEffect(() => {
     if (mapObj.current) return; // Opprett kun ett kart
@@ -114,6 +118,14 @@ export default function Maps({ showHuts, showTrails, activeTrail }) {
       target: mapRef.current,
       layers: [new TileLayer({ source: new OSM() }), vectorLayer],
       view: new View({ center, zoom: 13 }),
+    });
+
+    // Oppdater værdata når kartet flyttes
+    map.on("moveend", () => {
+     const view = map.getView();
+     const center = view.getCenter();
+     const lonLat = toLonLat(center);
+     setCenterLatLon({ lat: lonLat[1], lon: lonLat[0] });
     });
 
     // --- Popup ---
@@ -224,6 +236,8 @@ export default function Maps({ showHuts, showTrails, activeTrail }) {
         {followMe ? "Stop" : "Følg meg"}
       </button>
 
+        <WeatherPanel lat={centerLatLon.lat} lon={centerLatLon.lon} />
+
       <div
         ref={mapRef}
         style={{ width: "100%", height: "65vh", minHeight: "320px", borderRadius: "10px" }}
@@ -241,5 +255,4 @@ export default function Maps({ showHuts, showTrails, activeTrail }) {
         }}
       />
     </div>
-  );
-}
+)}
