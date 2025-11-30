@@ -1,4 +1,4 @@
-import ButtonLink from "./ButtonLink";
+import ButtonLink from "./ButtonLink.js";
 
 export default function Card({ title, text, link }) {
   return (

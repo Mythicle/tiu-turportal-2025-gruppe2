@@ -1,14 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useState } from "react";
-import Navbar from "./components/Navbar";
-import Home from "./pages/Home";
-import About from "./pages/About";
-import FAQ from "./pages/FAQ";
-import Kontaktoss from "./pages/Kontaktoss";
-import Kart from "./pages/Kart";
-import Admin from "./pages/Admin";
-import Advertiser from "./pages/Advertiser";
-import Login from "./pages/Login";
+import Navbar from "./components/Navbar.js";
+import Home from "./pages/Home.js";
+import About from "./pages/About.js";
+import FAQ from "./pages/FAQ.js";
+import Kontaktoss from "./pages/Kontaktoss.js";
+import Kart from "./pages/Kart.js";
+import Admin from "./pages/Admin.js";
+import Advertiser from "./pages/Advertiser.js";
+import Login from "./pages/Login.js";
 
 function App() {
   // Hent lagret login-status fra localStorage ved oppstart
@@ -58,11 +58,8 @@ function App() {
           {/* Beskyttet advertiser-side */}
           <Route
             path="/advertiser"
-            element={isLoggedIn && role === "advertiser" ? (
-              <Advertiser />
-            ) : (
-              <Navigate to="/" />
-            )}
+            element={isLoggedIn && role === "advertiser" ? 
+            (<Advertiser />) : (<Navigate to="/" />)}
           />
 
           {/* Login */}
