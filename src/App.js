@@ -9,6 +9,7 @@ import Kart from "./pages/Kart.js";
 import Admin from "./pages/Admin.js";
 import Advertiser from "./pages/Advertiser.js";
 import Login from "./pages/Login.js";
+import "./App.css";
 
 function App() {
   // Hent lagret login-status fra localStorage ved oppstart

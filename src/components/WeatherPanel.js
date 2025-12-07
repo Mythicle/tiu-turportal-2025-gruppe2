@@ -36,7 +36,7 @@ export default function WeatherPanel({ lat, lon }) {
     position: "absolute",
     bottom: "10px",
     left: "10px",
-    backgroundColor: "white",
+    backgroundColor: "#c1cdd9ae",
     padding: "10px 14px",
     borderRadius: "10px",
     border: "1px solid #aaa",
@@ -59,7 +59,7 @@ export default function WeatherPanel({ lat, lon }) {
       <p>Vind: <b>{weather.wind} m/s</b></p>
       {weather.symbol && (
         <img
-          alt="Værikon"
+          alt="Test tekst"
           src={`https://api.met.no/weatherapi/weathericon/2.0/?symbol=${weather.symbol}&content_type=image/png`}
           style={{ width: 50 }}
         />

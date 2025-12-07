@@ -14,7 +14,7 @@
 }
 
 .App-header {
-  background-color: #3267cf;
+  background-color: #3266cf;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -58,6 +58,19 @@
   }
 }
 
+body {
+  /*
+  Bakgrunnsbilde
+  */
+  margin: 0;
+  padding: 0;
+  background-image: url("./assets/background.jpg");
+  background-size: cover;        
+  background-position: center;   
+  background-repeat: no-repeat;  
+  height: 100vh;                 /* full høyde */
+}
+
 /* DARK MODE */
 body.dark-mode,
 body.dark-mode .App {
@@ -86,4 +99,5 @@ body.dark-mode p,
 body.dark-mode li,
 body.dark-mode span {
   color: #e0e0e0;
+  text-shadow: 0 0 2px black, 0 0 3px black;
 }

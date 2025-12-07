@@ -27,7 +27,8 @@ a:hover {
 /* Navbar */
 nav {
   padding: 15px 30px;
-  background-color: #282c34;
+  background-color: #2d5ab49c;
+  backdrop-filter: blur(6px);     /* Gjør den litt “glassaktig” */
   display: flex;
   gap: 20px;
   align-items: center;
@@ -36,7 +37,7 @@ nav {
 
 /* Kort styling */
 .card {
-  background: white;
+  background: rgba(255, 255, 255, 0.758);
   border-radius: 12px;
   padding: 25px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.1);
@@ -51,7 +52,7 @@ nav {
 
 .card h2 {
   margin-bottom: 10px;
-  color: #282c34;
+  color: #282c34e1;
 }
 
 /* Knapper */
@@ -120,7 +121,7 @@ body.dark-mode nav {
 }
 
 body.dark-mode .card {
-  background-color: #1f1f1f;
+  background-color: #1f1f1fd4;
   color: #e0e0e0;
   box-shadow: 0 6px 18px rgba(0,0,0,0.6);
 }

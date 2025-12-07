@@ -40,7 +40,7 @@ export default function Navbar({ isLoggedIn, role, handleLogout }) {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: darkMode ? "#1f1f1f" : "#1a4aacff",
+        backgroundColor: darkMode ? "#1f1f1fa2" : "#1a4bac9f",
         padding: "0 20px",
         height: "60px",
         boxSizing: "border-box",
