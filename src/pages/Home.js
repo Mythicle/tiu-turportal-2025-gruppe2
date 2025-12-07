@@ -4,7 +4,7 @@ import ButtonLink from "../components/ButtonLink";
 export default function Home() {
   return (
     <div>
-      <h1>Velkommen til vår moderne nettside!</h1>
+      <h1>Velkommen til vår nettside!</h1>
       <p>Utforsk sidene ved å klikke på kortene under eller bruk navbaren.</p>
 
       <div className="grid">
