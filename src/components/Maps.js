@@ -1,26 +1,38 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "ol/ol.css";
-import Map from "ol/Map";
-import View from "ol/View";
-import TileLayer from "ol/layer/Tile";
-import OSM from "ol/source/OSM";
-import { fromLonLat } from "ol/proj";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import Feature from "ol/Feature";
-import Point from "ol/geom/Point";
-import LineString from "ol/geom/LineString";
-import { Style, Icon, Stroke } from "ol/style";
-import Overlay from "ol/Overlay";
+import Map from "ol/Map.js";
+import View from "ol/View.js";
+import TileLayer from "ol/layer/Tile.js";
+import OSM from "ol/source/OSM.js";
+import { fromLonLat } from "ol/proj.js";
+import VectorLayer from "ol/layer/Vector.js";
+import VectorSource from "ol/source/Vector.js";
+import Feature from "ol/Feature.js";
+import Point from "ol/geom/Point.js";
+import LineString from "ol/geom/LineString.js";
+import { Style, Icon, Stroke, Fill, Circle } from "ol/style.js";
+import Overlay from "ol/Overlay.js";
+import Geolocation from "ol/Geolocation.js";
+import WeatherPanel from "../components/WeatherPanel.js";
+import { toLonLat } from "ol/proj.js";
 
 export default function Maps({ showHuts, showTrails, activeTrail }) {
   const mapRef = useRef();
   const popupRef = useRef();
   const mapObj = useRef();
 
+  const [followMe, setFollowMe] = useState(false);
+  const geolocationRef = useRef();
+  const userFeatureRef = useRef();
+
+  const [centerLatLon, setCenterLatLon] = useState({ lat: 60.17989, lon: 9.61519 });
+
   useEffect(() => {
+    if (mapObj.current) return; // Opprett kun ett kart
+
     const center = fromLonLat([9.61519, 60.17989]);
 
+    // --- Hytter ---
     const huts = [
       { name: "Norefjell Ski & Hytteområde", coords: [9.63, 60.285] },
       { name: "Norefjellstua Turisthytte", coords: [9.628, 60.287] },
@@ -45,6 +57,7 @@ export default function Maps({ showHuts, showTrails, activeTrail }) {
       return f;
     });
 
+    // --- Stier ---
     const trails = [
       {
         id: "rundtur",
@@ -88,36 +101,34 @@ export default function Maps({ showHuts, showTrails, activeTrail }) {
         trailId: trail.id,
         layer: "trails",
       });
-
       f.setStyle(
         new Style({
-          stroke: new Stroke({
-            color: "#FF5733",
-            width: 3,
-          }),
+          stroke: new Stroke({ color: "#FF5733", width: 3 }),
         })
       );
-
       return f;
     });
 
-    const vectorSource = new VectorSource({
-      features: [...hutFeatures, ...trailFeatures],
-    });
+    // --- Vector layer ---
+    const vectorSource = new VectorSource({ features: [...hutFeatures, ...trailFeatures] });
+    const vectorLayer = new VectorLayer({ source: vectorSource });
 
-    const vectorLayer = new VectorLayer({
-      source: vectorSource,
-    });
-
+    // --- Kart ---
     const map = new Map({
       target: mapRef.current,
       layers: [new TileLayer({ source: new OSM() }), vectorLayer],
-      view: new View({
-        center,
-        zoom: 13,
-      }),
+      view: new View({ center, zoom: 13 }),
     });
 
+    // Oppdater værdata når kartet flyttes
+    map.on("moveend", () => {
+     const view = map.getView();
+     const center = view.getCenter();
+     const lonLat = toLonLat(center);
+     setCenterLatLon({ lat: lonLat[1], lon: lonLat[0] });
+    });
+
+    // --- Popup ---
     const overlay = new Overlay({
       element: popupRef.current,
       autoPan: true,
@@ -135,45 +146,101 @@ export default function Maps({ showHuts, showTrails, activeTrail }) {
       }
     });
 
-    const handleResize = () => map.updateSize();
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", () => map.updateSize());
+
+    // --- Brukerposisjon ---
+    const userFeature = new Feature();
+    userFeature.setStyle(
+      new Style({
+        image: new Circle({
+          radius: 7,
+          fill: new Fill({ color: "#007bff" }),
+          stroke: new Stroke({ color: "#fff", width: 2 }),
+        }),
+      })
+    );
+
+    const userLayer = new VectorLayer({
+      source: new VectorSource({ features: [userFeature] }),
+    });
+    map.addLayer(userLayer);
+
+    const geolocation = new Geolocation({ projection: map.getView().getProjection(), tracking: false });
+    geolocation.on("change:position", () => {
+      const coords = geolocation.getPosition();
+      if (!coords) return;
+      userFeature.setGeometry(new Point(coords));
+      if (followMe) map.getView().animate({ center: coords, duration: 300 });
+    });
 
     mapObj.current = { map, vectorSource, hutFeatures, trailFeatures };
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      map.setTarget(null);
-    };
+    geolocationRef.current = geolocation;
+    userFeatureRef.current = userFeature;
   }, []);
 
+  // --- Filtrering av hytter og stier ---
   useEffect(() => {
     if (!mapObj.current) return;
-
     const { vectorSource, hutFeatures, trailFeatures } = mapObj.current;
 
     vectorSource.clear();
-
     const hutsToShow = showHuts ? hutFeatures : [];
-    const trailsToShow =
-      showTrails
-        ? activeTrail
-          ? trailFeatures.filter((t) => t.get("trailId") === activeTrail)
-          : trailFeatures
-        : [];
+    const trailsToShow = showTrails
+      ? activeTrail
+        ? trailFeatures.filter((t) => t.get("trailId") === activeTrail)
+        : trailFeatures
+      : [];
 
     vectorSource.addFeatures([...hutsToShow, ...trailsToShow]);
   }, [showHuts, showTrails, activeTrail]);
 
+  // --- Følg meg knapp ---
+  const toggleFollowMe = () => {
+    if (!geolocationRef.current || !userFeatureRef.current) return;
+
+    const tracking = !followMe;
+    geolocationRef.current.setTracking(tracking);
+    setFollowMe(tracking);
+
+    if (!tracking) {
+      // Fjern prikken
+      userFeatureRef.current.setGeometry(null);
+    } else {
+      // Sett geometrien til siste posisjon umiddelbart
+      const coords = geolocationRef.current.getPosition();
+      if (coords) {
+        userFeatureRef.current.setGeometry(new Point(coords));
+        mapObj.current.map.getView().animate({ center: coords, duration: 300 });
+      }
+    }
+  };
+
   return (
-    <>
+    <div style={{ position: "relative" }}>
+      <button
+        onClick={toggleFollowMe}
+        style={{
+          position: "absolute",
+          top: "10px",
+          right: "10px",
+          zIndex: 1000,
+          padding: "6px 10px",
+          fontSize: "12px",
+          borderRadius: "6px",
+          border: "none",
+          cursor: "pointer",
+          backgroundColor: followMe ? "#007bff" : "#666",
+          color: "white",
+        }}
+      >
+        {followMe ? "Stop" : "Følg meg"}
+      </button>
+
+        <WeatherPanel lat={centerLatLon.lat} lon={centerLatLon.lon} />
+
       <div
         ref={mapRef}
-        style={{
-          width: "100%",
-          height: "65vh",
-          minHeight: "320px",
-          borderRadius: "10px",
-        }}
+        style={{ width: "100%", height: "65vh", minHeight: "320px", borderRadius: "10px" }}
       />
 
       <div
@@ -184,9 +251,8 @@ export default function Maps({ showHuts, showTrails, activeTrail }) {
           borderRadius: "6px",
           border: "1px solid #444",
           position: "absolute",
-          zIndex: 1000,
+          zIndex: 2000,
         }}
       />
-    </>
-  );
-}
+    </div>
+)}

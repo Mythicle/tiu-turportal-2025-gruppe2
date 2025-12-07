@@ -1,6 +1,6 @@
 import { useState } from "react";
-import Maps from "../components/Maps";
-import FilterPanelMaps from "../components/FilterPanelMaps";
+import Maps from "../components/Maps.js";
+import FilterPanelMaps from "../components/FilterPanelMaps.js";
 
 export default function Kart() {
   const [showHuts, setShowHuts] = useState(true);

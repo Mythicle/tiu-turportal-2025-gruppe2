@@ -1,5 +1,5 @@
-import Card from "../components/Card";
-import ButtonLink from "../components/ButtonLink";
+import Card from "../components/Card.js";
+import ButtonLink from "../components/ButtonLink.js";
 
 export default function Home() {
   return (
