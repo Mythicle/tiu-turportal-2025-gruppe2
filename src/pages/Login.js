@@ -7,53 +7,84 @@ export default function Login({ handleLogin }) {
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
-  // Legger til roller
-  const demoUsers = [
-    { username: "admin", password: "1234", role: "admin" },
-    { username: "advertiser", password: "abcd", role: "advertiser" }
-  ];
+ const onSubmit = async (e) => {
+  e.preventDefault();
 
-  const onSubmit = (e) => {
-    e.preventDefault();
-    const user = demoUsers.find(u => u.username === username && u.password === password);
+  try {
+    const res = await fetch("http://localhost:4000/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
 
-    if (user) {
-      setMessage("Innlogging vellykket!");
-      handleLogin(user.role); // sender rolle tilbake til App.js
-      // Redirect etter 0,7 sekund
-      setTimeout(() => navigate("/"), 700);
-    } else {
-      setMessage("Feil brukernavn eller passord");
+    if (!res.ok) {
+      const err = await res.json();
+      setMessage(err.error || "Innlogging feilet");
+      return;
     }
-  };
+
+    const user = await res.json();
+
+    setMessage("Innlogging vellykket!");
+    handleLogin(user.role);
+    setTimeout(() => navigate("/"), 700);
+
+  } catch (err) {
+    console.error("Fetch-feil:", err);
+    setMessage("Kunne ikke kontakte server");
+  }
+};
 
   return (
     <div style={{ maxWidth: "400px", margin: "50px auto", textAlign: "center" }}>
       <h1>Logg inn</h1>
-      <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+
+      <form
+        onSubmit={onSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: "15px" }}
+      >
         <input
           type="text"
           placeholder="Brukernavn"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc" }}
+          style={{
+            padding: "10px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+          }}
         />
+
         <input
           type="password"
           placeholder="Passord"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc" }}
+          style={{
+            padding: "10px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+          }}
         />
-        <button type="submit" style={{
-          padding: "10px", borderRadius: "6px", border: "none",
-          backgroundColor: "#61dafb", color: "white", fontWeight: "bold", cursor: "pointer"
-        }}>
+
+        <button
+          type="submit"
+          style={{
+            padding: "10px",
+            borderRadius: "6px",
+            border: "none",
+            backgroundColor: "#61dafb",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+        >
           Logg inn
         </button>
       </form>
+
       {message && <p style={{ marginTop: "15px" }}>{message}</p>}
     </div>
   );

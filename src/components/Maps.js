@@ -1,258 +1,131 @@
-import { useEffect, useRef, useState } from "react";
-import "ol/ol.css";
+import { useEffect, useRef } from "react";
 import Map from "ol/Map.js";
 import View from "ol/View.js";
 import TileLayer from "ol/layer/Tile.js";
-import OSM from "ol/source/OSM.js";
-import { fromLonLat } from "ol/proj.js";
 import VectorLayer from "ol/layer/Vector.js";
+import OSM from "ol/source/OSM.js";
 import VectorSource from "ol/source/Vector.js";
 import Feature from "ol/Feature.js";
 import Point from "ol/geom/Point.js";
 import LineString from "ol/geom/LineString.js";
-import { Style, Icon, Stroke, Fill, Circle } from "ol/style.js";
-import Overlay from "ol/Overlay.js";
-import Geolocation from "ol/Geolocation.js";
-import WeatherPanel from "../components/WeatherPanel.js";
-import { toLonLat } from "ol/proj.js";
+import { fromLonLat } from "ol/proj.js";
+import { Style, Icon, Text, Fill, Stroke } from "ol/style.js";
 
-export default function Maps({ showHuts, showTrails, activeTrail }) {
-  const mapRef = useRef();
-  const popupRef = useRef();
-  const mapObj = useRef();
-
-  const [followMe, setFollowMe] = useState(false);
-  const geolocationRef = useRef();
-  const userFeatureRef = useRef();
-
-  const [centerLatLon, setCenterLatLon] = useState({ lat: 60.17989, lon: 9.61519 });
+function Maps() {
+  const mapRef = useRef(null);
 
   useEffect(() => {
-    if (mapObj.current) return; // Opprett kun ett kart
+    // Hytter
+    const hutSource = new VectorSource();
 
-    const center = fromLonLat([9.61519, 60.17989]);
-
-    // --- Hytter ---
-    const huts = [
-      { name: "Norefjell Ski & Hytteområde", coords: [9.63, 60.285] },
-      { name: "Norefjellstua Turisthytte", coords: [9.628, 60.287] },
-      { name: "Fjellhytte", coords: [9.635, 60.284] },
-      { name: "Norefjellstua", coords: [9.5629, 60.22184] },
-    ];
-
-    const hutFeatures = huts.map((hut) => {
-      const f = new Feature({
-        geometry: new Point(fromLonLat(hut.coords)),
-        name: hut.name,
-        layer: "huts",
-      });
-      f.setStyle(
+    const hutLayer = new VectorLayer({
+      source: hutSource,
+      style: (feature) =>
         new Style({
           image: new Icon({
             src: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
             scale: 0.05,
+            anchor: [0.5, 1],
           }),
-        })
-      );
-      return f;
+          text: new Text({
+            text: feature.get("name"),
+            offsetY: -25,
+            fill: new Fill({ color: "#fff" }),
+            stroke: new Stroke({ color: "#000", width: 3 }),
+          }),
+        }),
     });
 
-    // --- Stier ---
-    const trails = [
-      {
-        id: "rundtur",
-        name: "Norefjell Rundtur",
-        coords: [
-          [9.630, 60.284],
-          [9.632, 60.285],
-          [9.634, 60.286],
-          [9.636, 60.288],
-        ],
-      },
-      {
-        id: "fjelltopprunden",
-        name: "Fjelltopprunden",
-        coords: [
-          [9.628, 60.287],
-          [9.629, 60.288],
-          [9.631, 60.289],
-        ],
-      },
-      {
-        id: "olberg",
-        name: "Olberg – Skolen",
-        coords: [
-          [9.63603, 60.1711871],
-          [9.6373714, 60.1730335],
-          [9.6347989, 60.1742761],
-          [9.6325535, 60.1753383],
-          [9.6279923, 60.1784539],
-          [9.624509, 60.1796521],
-          [9.6231964, 60.1794988],
-          [9.6216559, 60.1793362],
-        ],
-      },
-    ];
-
-    const trailFeatures = trails.map((trail) => {
-      const f = new Feature({
-        geometry: new LineString(trail.coords.map((c) => fromLonLat(c))),
-        name: trail.name,
-        trailId: trail.id,
-        layer: "trails",
-      });
-      f.setStyle(
+    // Stier
+    const trailSource = new VectorSource();
+    const trailLayer = new VectorLayer({
+      source: trailSource,
+      style: (feature) =>
         new Style({
-          stroke: new Stroke({ color: "#FF5733", width: 3 }),
-        })
-      );
-      return f;
+          stroke: new Stroke({
+            color: "#FF5733",
+            width: 3,
+          }),
+          text: new Text({
+            text: feature.get("name"),
+            placement: "line",
+            overflow: true,
+            font: "bold 14px sans-serif",
+            fill: new Fill({ color: "#ffffff" }),
+            stroke: new Stroke({ color: "#000000", width: 3 }),
+          }),
+        }),
     });
 
-    // --- Vector layer ---
-    const vectorSource = new VectorSource({ features: [...hutFeatures, ...trailFeatures] });
-    const vectorLayer = new VectorLayer({ source: vectorSource });
-
-    // --- Kart ---
+    // Kart
     const map = new Map({
       target: mapRef.current,
-      layers: [new TileLayer({ source: new OSM() }), vectorLayer],
-      view: new View({ center, zoom: 13 }),
+      layers: [new TileLayer({ source: new OSM() }), trailLayer, hutLayer],
+      view: new View({
+        center: fromLonLat([9.6, 60.18]),
+        zoom: 12,
+      }),
     });
 
-    // Oppdater værdata når kartet flyttes
-    map.on("moveend", () => {
-     const view = map.getView();
-     const center = view.getCenter();
-     const lonLat = toLonLat(center);
-     setCenterLatLon({ lat: lonLat[1], lon: lonLat[0] });
-    });
+    // Hent hytter
+    fetch("http://localhost:4000/huts")
+      .then((res) => res.json())
+      .then((huts) => {
+        huts.forEach((hut) => {
+          hutSource.addFeature(
+            new Feature({
+              geometry: new Point(fromLonLat([hut.lon, hut.lat])),
+              name: hut.name,
+            })
+          );
+        });
+      });
 
-    // --- Popup ---
-    const overlay = new Overlay({
-      element: popupRef.current,
-      autoPan: true,
-      autoPanAnimation: { duration: 250 },
-    });
-    map.addOverlay(overlay);
+    // Hent stier
+    fetch("http://localhost:4000/trails")
+      .then((res) => res.json())
+      .then((rows) => {
+        console.log("TRAIL ROWS:", rows);
 
-    map.on("click", (evt) => {
-      const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
-      if (feature) {
-        overlay.setPosition(evt.coordinate);
-        popupRef.current.innerHTML = `<b>${feature.get("name")}</b>`;
-      } else {
-        overlay.setPosition(undefined);
-      }
-    });
+        const trailsById = {};
 
-    window.addEventListener("resize", () => map.updateSize());
+        // Gruppér alle punkter per trail_id
+        rows.forEach((row) => {
+          if (!trailsById[row.trail_id]) {
+            trailsById[row.trail_id] = [];
+          }
 
-    // --- Brukerposisjon ---
-    const userFeature = new Feature();
-    userFeature.setStyle(
-      new Style({
-        image: new Circle({
-          radius: 7,
-          fill: new Fill({ color: "#007bff" }),
-          stroke: new Stroke({ color: "#fff", width: 2 }),
-        }),
+          trailsById[row.trail_id].push({
+            lon: row.lon,
+            lat: row.lat,
+            order: row.point_order,
+          });
+        });
+
+        // Lag én LineString per trail_id
+        Object.entries(trailsById).forEach(([trailId, points]) => {
+          console.log("Trail", trailId, points);
+
+          if (points.length < 2) return;
+
+          const coords = points
+            .sort((a, b) => a.order - b.order)
+            .map((p) => fromLonLat([p.lon, p.lat]));
+
+          const feature = new Feature({
+            geometry: new LineString(coords),
+            trail_id: trailId,
+            name: rows.find((r) => r.trail_id === trailId)?.name,
+          });
+
+          trailSource.addFeature(feature);
+        });
       })
-    );
-
-    const userLayer = new VectorLayer({
-      source: new VectorSource({ features: [userFeature] }),
-    });
-    map.addLayer(userLayer);
-
-    const geolocation = new Geolocation({ projection: map.getView().getProjection(), tracking: false });
-    geolocation.on("change:position", () => {
-      const coords = geolocation.getPosition();
-      if (!coords) return;
-      userFeature.setGeometry(new Point(coords));
-      if (followMe) map.getView().animate({ center: coords, duration: 300 });
-    });
-
-    mapObj.current = { map, vectorSource, hutFeatures, trailFeatures };
-    geolocationRef.current = geolocation;
-    userFeatureRef.current = userFeature;
+      .catch((err) => console.error("Feil ved henting av stier:", err));
+    return () => map.setTarget(undefined);
   }, []);
 
-  // --- Filtrering av hytter og stier ---
-  useEffect(() => {
-    if (!mapObj.current) return;
-    const { vectorSource, hutFeatures, trailFeatures } = mapObj.current;
+  return <div ref={mapRef} style={{ width: "100%", height: "80vh" }} />;
+}
 
-    vectorSource.clear();
-    const hutsToShow = showHuts ? hutFeatures : [];
-    const trailsToShow = showTrails
-      ? activeTrail
-        ? trailFeatures.filter((t) => t.get("trailId") === activeTrail)
-        : trailFeatures
-      : [];
-
-    vectorSource.addFeatures([...hutsToShow, ...trailsToShow]);
-  }, [showHuts, showTrails, activeTrail]);
-
-  // --- Følg meg knapp ---
-  const toggleFollowMe = () => {
-    if (!geolocationRef.current || !userFeatureRef.current) return;
-
-    const tracking = !followMe;
-    geolocationRef.current.setTracking(tracking);
-    setFollowMe(tracking);
-
-    if (!tracking) {
-      // Fjern prikken
-      userFeatureRef.current.setGeometry(null);
-    } else {
-      // Sett geometrien til siste posisjon umiddelbart
-      const coords = geolocationRef.current.getPosition();
-      if (coords) {
-        userFeatureRef.current.setGeometry(new Point(coords));
-        mapObj.current.map.getView().animate({ center: coords, duration: 300 });
-      }
-    }
-  };
-
-  return (
-    <div style={{ position: "relative" }}>
-      <button
-        onClick={toggleFollowMe}
-        style={{
-          position: "absolute",
-          top: "10px",
-          right: "10px",
-          zIndex: 1000,
-          padding: "6px 10px",
-          fontSize: "12px",
-          borderRadius: "6px",
-          border: "none",
-          cursor: "pointer",
-          backgroundColor: followMe ? "#007bff" : "#666",
-          color: "white",
-        }}
-      >
-        {followMe ? "Stop" : "Følg meg"}
-      </button>
-
-        <WeatherPanel lat={centerLatLon.lat} lon={centerLatLon.lon} />
-
-      <div
-        ref={mapRef}
-        style={{ width: "100%", height: "65vh", minHeight: "320px", borderRadius: "10px" }}
-      />
-
-      <div
-        ref={popupRef}
-        style={{
-          backgroundColor: "white",
-          padding: "6px 12px",
-          borderRadius: "6px",
-          border: "1px solid #444",
-          position: "absolute",
-          zIndex: 2000,
-        }}
-      />
-    </div>
-)}
+export default Maps;
